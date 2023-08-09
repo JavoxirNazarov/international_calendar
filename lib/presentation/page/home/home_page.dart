@@ -1,7 +1,5 @@
 import 'package:calendar/injection_container.dart';
-import 'package:calendar/presentation/page/home/bloc/home_bloc.dart';
-import 'package:calendar/presentation/page/home/bloc/home_event.dart';
-import 'package:calendar/presentation/page/home/bloc/home_state.dart';
+import 'package:calendar/presentation/page/home/bloc/home_screen_bloc.dart';
 import 'package:calendar/presentation/widget/widget_failure_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,7 +15,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    bloc.add(HomeScreenLoadEvent());
+    bloc.add(HomeScreenEvent.init());
     super.initState();
   }
 
@@ -60,90 +58,83 @@ class _HomePageState extends State<HomePage> {
         create: (context) => bloc,
         child: SafeArea(child: BlocBuilder<HomeScreenBloc, HomeScreenState>(
             builder: (context, state) {
-          if (state is HomeScreenLoadingState) {
-            return Center(child: CircularProgressIndicator());
-          }
+          return state.when(
+            initial: () => SizedBox.shrink(),
+            loading: () => Center(child: CircularProgressIndicator()),
+            loaded: (eventsData, monthData) {
+              final firstDay = DateTime.utc(
+                monthData.year,
+                int.tryParse(monthData.month) ?? 1,
+                1,
+              );
 
-          if (state is HomeScreenLoadedState) {
-            final monthData = state.monthData;
-            final eventsData = state.eventsData;
-            final firstDay = DateTime.utc(
-              monthData.year,
-              int.tryParse(monthData.month) ?? 1,
-              1,
-            );
+              final lastDay = DateTime(firstDay.year, firstDay.month + 1, 0);
 
-            final lastDay = DateTime(firstDay.year, firstDay.month + 1, 0);
-
-            return TableCalendar(
-              firstDay: firstDay,
-              lastDay: lastDay,
-              focusedDay: firstDay,
-              calendarFormat: CalendarFormat.month,
-              daysOfWeekStyle: DaysOfWeekStyle(
-                weekendStyle: TextStyle(
-                  color: Colors.red,
+              return TableCalendar(
+                firstDay: firstDay,
+                lastDay: lastDay,
+                focusedDay: firstDay,
+                calendarFormat: CalendarFormat.month,
+                daysOfWeekStyle: DaysOfWeekStyle(
+                  weekendStyle: TextStyle(
+                    color: Colors.red,
+                  ),
                 ),
-              ),
-              calendarStyle: CalendarStyle(
-                weekendTextStyle: TextStyle(color: Colors.red),
-              ),
-              calendarBuilders: CalendarBuilders(
-                selectedBuilder: (context, calendarDay, focusedDay) {
+                calendarStyle: CalendarStyle(
+                  weekendTextStyle: TextStyle(color: Colors.red),
+                ),
+                calendarBuilders: CalendarBuilders(
+                  selectedBuilder: (context, calendarDay, focusedDay) {
+                    final dayNumber = calendarDay.day;
+
+                    final eventDayCode = monthData.eventDays[dayNumber];
+
+                    // DOn't checking null because it's map and we have selectedDayPredicate that stops this
+                    // function when it null
+                    Color bgColor = eventsData.codeColorMap[eventDayCode] ??
+                        Colors.transparent;
+
+                    return Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(50),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            dayNumber.toString(),
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                selectedDayPredicate: (calendarDay) {
                   final dayNumber = calendarDay.day;
 
                   final eventDayCode = monthData.eventDays[dayNumber];
 
-                  // DOn't checking null because it's map and we have selectedDayPredicate that stops this
-                  // function when it null
-                  Color bgColor = eventsData.codeColorMap[eventDayCode] ??
-                      Colors.transparent;
-
-                  return Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: bgColor,
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(50),
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          dayNumber.toString(),
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                    ),
-                  );
+                  return eventDayCode != null;
                 },
-              ),
-              selectedDayPredicate: (calendarDay) {
-                final dayNumber = calendarDay.day;
-
-                final eventDayCode = monthData.eventDays[dayNumber];
-
-                return eventDayCode != null;
-              },
-              daysOfWeekHeight: 40,
-              weekendDays: [7],
-              startingDayOfWeek: StartingDayOfWeek.monday,
-              headerStyle: HeaderStyle(
-                formatButtonVisible: false,
-              ),
-              onDaySelected: (selectedDay, focusedDay) {
-                showDayPopup(context, selectedDay, monthData.eventDays);
-              },
-            );
-          }
-
-          if (state is HomeScreenErrorState) {
-            return Center(
-              child: WidgetFailureMessage(errorTitle: state.errorMessage),
-            );
-          }
-
-          return SizedBox.shrink();
+                daysOfWeekHeight: 40,
+                weekendDays: [7],
+                startingDayOfWeek: StartingDayOfWeek.monday,
+                headerStyle: HeaderStyle(
+                  formatButtonVisible: false,
+                ),
+                onDaySelected: (selectedDay, focusedDay) {
+                  showDayPopup(context, selectedDay, monthData.eventDays);
+                },
+              );
+            },
+            error: (errorMessage) => Center(
+              child: WidgetFailureMessage(errorTitle: errorMessage),
+            ),
+          );
         })),
       ),
     );

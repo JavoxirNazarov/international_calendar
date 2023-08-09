@@ -1,4 +1,3 @@
-import 'package:equatable/equatable.dart';
 import 'package:calendar/core/usecase/usecase.dart';
 import 'package:calendar/data/model/month/month_model.dart';
 import 'package:calendar/domain/repository/month/month_repository.dart';
@@ -14,9 +13,6 @@ class GetMoth implements UseCase<MonthModel, ParamsGetMonth> {
   }
 }
 
-class ParamsGetMonth extends Equatable {
+class ParamsGetMonth {
   ParamsGetMonth();
-
-  @override
-  List<Object> get props => [];
 }

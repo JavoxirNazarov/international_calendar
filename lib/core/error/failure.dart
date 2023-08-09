@@ -1,14 +1,9 @@
-import 'package:equatable/equatable.dart';
-
 final String messageConnectionFailure = 'Connection Failure';
 
-class Failure extends Equatable {
+class Failure {
   final String errorMessage;
 
-  Failure(this.errorMessage);
-
-  @override
-  List<Object> get props => [errorMessage];
+  const Failure(this.errorMessage);
 
   @override
   String toString() {
