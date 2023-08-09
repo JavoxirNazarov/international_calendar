@@ -17,15 +17,17 @@ class EventsInfoRepositoryImpl implements EventsInfoRepository {
   @override
   Future<EventsInfoModel> getEventsInfo() async {
     var isConnected = await networkInfo.isConnected;
-    if (isConnected) {
-      try {
-        var response = await eventsInfoRemoteDataSource.getEventsInfo();
-        return response;
-      } on DioException catch (error) {
-        throw ServerFailure(error.message ?? 'semething wrong');
-      }
-    } else {
-      throw ConnectionFailure();
+    if (!isConnected) {
+      throw Failure(messageConnectionFailure);
+    }
+
+    try {
+      var response = await eventsInfoRemoteDataSource.getEventsInfo();
+      return response;
+    } on DioException catch (error) {
+      throw Failure(error.message ?? 'semething wrong');
+    } catch (err) {
+      rethrow;
     }
   }
 }

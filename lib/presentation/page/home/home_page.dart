@@ -94,12 +94,10 @@ class _HomePageState extends State<HomePage> {
 
                   final eventDayCode = monthData.eventDays[dayNumber];
 
-                  Color? bgColor;
-
-                  if (eventDayCode != null) {
-                    bgColor = eventsData.codeColorMap[eventDayCode] ??
-                        Colors.transparent;
-                  }
+                  // DOn't checking null because it's map and we have selectedDayPredicate that stops this
+                  // function when it null
+                  Color bgColor = eventsData.codeColorMap[eventDayCode] ??
+                      Colors.transparent;
 
                   return Padding(
                     padding: const EdgeInsets.all(4.0),
